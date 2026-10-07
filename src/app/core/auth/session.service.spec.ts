@@ -16,10 +16,17 @@ describe('SessionService', () => {
     expect(localStorage.length).toBe(0);
   });
 
+  it('keeps the name of the person with the session, for the avatar', () => {
+    const session = TestBed.inject(SessionService);
+    session.set('token-abc', 'Juan Ortiz');
+    expect(session.name()).toBe('Juan Ortiz');
+  });
+
   it('closes the session', () => {
     const session = TestBed.inject(SessionService);
-    session.set('token-abc');
+    session.set('token-abc', 'Juan Ortiz');
     session.clear();
     expect(session.token()).toBeNull();
+    expect(session.name()).toBeNull();
   });
 });
