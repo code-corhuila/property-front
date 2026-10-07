@@ -1,0 +1,25 @@
+import { TestBed } from '@angular/core/testing';
+import { SessionService } from './session.service';
+
+describe('SessionService', () => {
+  beforeEach(() => sessionStorage.clear());
+
+  it('starts without a session', () => {
+    expect(TestBed.inject(SessionService).token()).toBeNull();
+  });
+
+  it('holds the access token in memory only, never in browser storage', () => {
+    const session = TestBed.inject(SessionService);
+    session.set('token-abc');
+    expect(session.token()).toBe('token-abc');
+    expect(sessionStorage.length).toBe(0);
+    expect(localStorage.length).toBe(0);
+  });
+
+  it('closes the session', () => {
+    const session = TestBed.inject(SessionService);
+    session.set('token-abc');
+    session.clear();
+    expect(session.token()).toBeNull();
+  });
+});

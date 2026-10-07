@@ -1,0 +1,41 @@
+import { booleanAttribute, Component, inject, input } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { SessionService } from './session.service';
+
+/**
+ * DEVELOPMENT ONLY. Until the identity domain exists, a token minted with
+ * property-infra/scripts/dev-token.sh is pasted here. The login of
+ * property-identity-portal replaces this component, and it never reaches `main`
+ * (course norm, numeral 5.5.2).
+ */
+@Component({
+  selector: 'app-sign-in',
+  imports: [ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form" (ngSubmit)="submit()" aria-labelledby="signin-title">
+      <h1 id="signin-title">Inicio de sesión de desarrollo</h1>
+      @if (expired()) {
+        <p role="alert">Tu sesión expiró</p>
+      }
+      <label for="dev-token">Token de acceso (dev-token.sh)</label>
+      <textarea id="dev-token" rows="4" formControlName="token"></textarea>
+      <button type="submit" [disabled]="form.invalid">Iniciar sesión</button>
+    </form>
+  `,
+})
+export class SignInComponent {
+  // Bound from the query string: undefined when the login was opened directly.
+  readonly returnUrl = input<string | undefined>();
+  readonly expired = input(false, { transform: booleanAttribute });
+  private readonly session = inject(SessionService);
+  private readonly router = inject(Router);
+  readonly form = inject(NonNullableFormBuilder).group({ token: ['', Validators.required] });
+
+  submit(): void {
+    this.session.set(this.form.getRawValue().token.trim());
+    // Only paths inside this application: an absolute URL never leaves it.
+    const returnUrl = this.returnUrl();
+    void this.router.navigateByUrl(returnUrl?.startsWith('/') ? returnUrl : '/explorar');
+  }
+}
