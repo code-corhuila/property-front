@@ -25,6 +25,13 @@ Portals are loaded as routes inside the container's injector, so when a portal i
 checkable: **a portal never calls `provideHttpClient()`**. If it did, it would create a
 second client without the interceptor, and its requests would go out unauthenticated.
 
+## Development sign-in
+
+Until `property-identity-portal` exists, `/auth/login` accepts a token pasted by hand,
+minted with `property-infra/scripts/dev-token.sh`. It is for development only and never
+reaches `main`. The token lives in memory, so reloading the page closes the session
+(`00-governance/security-policy.md`, "Client storage").
+
 ## Install, run and test
 
 ```bash
