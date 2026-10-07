@@ -2,6 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { SessionService } from './session.service';
 import { SignInComponent } from './sign-in.component';
 
 describe('SignInComponent', () => {
@@ -18,6 +19,21 @@ describe('SignInComponent', () => {
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/auth/login?expired=true');
     expect(harness.routeNativeElement?.textContent).toContain('Tu sesión expiró');
+  });
+
+  it('keeps the optional name with the session', async () => {
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/auth/login');
+    const element = harness.routeNativeElement!;
+    const set = (selector: string, value: string) => {
+      const field = element.querySelector<HTMLInputElement | HTMLTextAreaElement>(selector)!;
+      field.value = value;
+      field.dispatchEvent(new Event('input'));
+    };
+    set('#dev-token', 'token-abc');
+    set('#dev-name', ' Juan Ortiz ');
+    element.querySelector('form')!.dispatchEvent(new Event('submit'));
+    expect(TestBed.inject(SessionService).name()).toBe('Juan Ortiz');
   });
 
   it('goes to Explorar after signing in when the login was opened directly', async () => {
