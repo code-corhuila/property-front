@@ -20,8 +20,27 @@ import { SessionService } from './session.service';
       }
       <label for="dev-token">Token de acceso (dev-token.sh)</label>
       <textarea id="dev-token" rows="4" formControlName="token"></textarea>
+      <label for="dev-name">Nombre (opcional, para el avatar)</label>
+      <input id="dev-name" type="text" formControlName="name">
       <button type="submit" [disabled]="form.invalid">Iniciar sesión</button>
     </form>
+  `,
+  styles: `
+    form {
+      display: grid; gap: var(--space-2); margin: 0 auto; max-width: calc(8 * var(--space-16));
+      padding: var(--space-8); background: var(--color-bg-card);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+    }
+    h1 { font-family: var(--font-family-serif); font-size: var(--font-size-2xl); margin: 0; }
+    label { font-size: var(--font-size-sm); }
+    textarea, input { font: inherit; padding: var(--space-2); border-radius: var(--radius-md); }
+    [role='alert'] { color: var(--color-error); }
+    button {
+      margin-top: var(--space-4); padding: var(--space-3); border: none; cursor: pointer;
+      border-radius: var(--radius-md); font: inherit; font-weight: var(--font-weight-medium);
+      background: var(--color-primary-900); color: var(--color-text-on-dark);
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
   `,
 })
 export class SignInComponent {
@@ -30,10 +49,14 @@ export class SignInComponent {
   readonly expired = input(false, { transform: booleanAttribute });
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
-  readonly form = inject(NonNullableFormBuilder).group({ token: ['', Validators.required] });
+  readonly form = inject(NonNullableFormBuilder).group({
+    token: ['', Validators.required],
+    name: [''],
+  });
 
   submit(): void {
-    this.session.set(this.form.getRawValue().token.trim());
+    const { token, name } = this.form.getRawValue();
+    this.session.set(token.trim(), name.trim() || null);
     // Only paths inside this application: an absolute URL never leaves it.
     const returnUrl = this.returnUrl();
     void this.router.navigateByUrl(returnUrl?.startsWith('/') ? returnUrl : '/explorar');
