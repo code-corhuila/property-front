@@ -75,6 +75,19 @@ npm test        # unit tests, one run (Vitest)
 never caches `remoteEntry` nor the federation manifest: they decide which version of each
 portal the browser loads.
 
+## Run with Docker
+
+Build the image on its own, from the root of this repository:
+
+```bash
+docker build -f deploy/Dockerfile -t property-front:dev .
+```
+
+`.dockerignore` keeps `node_modules`, `dist`, `.angular` and `.git` out of the image: it
+installs its own dependencies with `npm ci`. `deploy/compose.yml` publishes no port and
+expects the external `platform` network, so to see the container with the catalog portal
+and test data, use [`property-infra`](https://github.com/code-corhuila/property-infra).
+
 ## Branching
 
 Three permanent branches. **None of them accepts a direct commit** — you enter through a child
