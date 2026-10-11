@@ -34,13 +34,13 @@ array of routes per mount point. The federation `name` of a portal must equal it
 
 | Route | Portal | Export of `./routes` | Local address |
 |---|---|---|---|
-| `/auth/register` ¹, `/auth/onboarding`, `/perfil` | `identity` | `REGISTER_ROUTES`, `ONBOARDING_ROUTES`, `PROFILE_ROUTES` | `http://localhost:4204` |
+| `/auth/login` ¹, `/auth/register` ¹, `/auth/onboarding`, `/perfil` | `identity` | `LOGIN_ROUTES`, `REGISTER_ROUTES`, `ONBOARDING_ROUTES`, `PROFILE_ROUTES` | `http://localhost:4204` |
 | `/explorar`, `/propiedades/:propiedadId` | `catalog` | `EXPLORE_ROUTES`, `PROPERTY_ROUTES` | `http://localhost:4201` |
 | `/propiedades/:propiedadId/reservar`, `/reservas` | `booking` | `BOOKING_FORM_ROUTES`, `BOOKINGS_ROUTES` | `http://localhost:4202` |
 | `/reservas/checkout/pago` | `payment` | `PAYMENT_ROUTES` | `http://localhost:4203` |
 | `/perfil/notificaciones` | `notification` (React) | — ² | `http://localhost:4205` |
 
-¹ Public, like `/` and `/auth/login`. Every other route needs a session.
+¹ Public, like `/`. Every other route needs a session.
 ² The React portal is mounted through `mount(element, { apiClient })` and `unmount(element)`
 (ADR-012, rule 3) when `property-notification-portal` is created; until then the route
 only shows that the section is not available.
@@ -52,12 +52,14 @@ When a portal cannot be loaded, its area shows "Esta sección no está disponibl
 "Reintentar" button; the frame and the other portals keep working. "Reintentar" loads the
 portal again without reloading the page, which would close the session.
 
-## Development sign-in
+## Sign-in
 
-Until `property-identity-portal` exists, `/auth/login` accepts a token pasted by hand,
-minted with `property-infra/scripts/dev-token.sh`. It is for development only and never
-reaches `main`. The token lives in memory, so reloading the page closes the session
-(`00-governance/security-policy.md`, "Client storage").
+`/auth/login` is the login of `property-identity-portal` (HU-IDENT-002), mounted from
+`LOGIN_ROUTES`. Until that portal exists, the route shows that the section is not
+available, like any portal that is down. The development sign-in, where a token minted
+with `property-infra/scripts/dev-token.sh` is pasted by hand, lives only in `develop` and
+`qa` and never reaches `main` (rule 5.5.2). The token lives in memory, so reloading the
+page closes the session (`00-governance/security-policy.md`, "Client storage").
 
 ## Install, run and test
 

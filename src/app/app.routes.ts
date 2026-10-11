@@ -25,9 +25,7 @@ export function createRoutes(): Routes {
   return [
     { path: '', pathMatch: 'full', title: 'Property', canActivate: [landingGuard], loadComponent: () =>
         import('./layout/home.component').then((m) => m.HomeComponent) },
-    // DEVELOPMENT ONLY: replaced by the login of the identity portal (README).
-    { path: 'auth/login', title: 'Iniciar sesión', loadComponent: () =>
-        import('./core/auth/sign-in.component').then((m) => m.SignInComponent) },
+    { path: 'auth/login', loadChildren: portal('identity', 'LOGIN_ROUTES') },
     { path: 'auth/register', loadChildren: portal('identity', 'REGISTER_ROUTES') },
     { path: 'auth/onboarding', ...signedIn, loadChildren: portal('identity', 'ONBOARDING_ROUTES') },
     { path: 'explorar', ...signedIn, loadChildren: portal('catalog', 'EXPLORE_ROUTES') },

@@ -9,14 +9,21 @@ import { SessionService } from './core/auth/session.service';
 @Component({ template: 'explorar' })
 class ExploreStubComponent {}
 
+@Component({ selector: 'app-login-stub', template: 'login' })
+class LoginStubComponent {}
+
 describe('app routes', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        // A stand-in for the catalog portal, which is not mounted here.
-        provideRouter([{ path: 'explorar', component: ExploreStubComponent }, ...routes],
-          withComponentInputBinding()),
+        // Stand-ins for the catalog portal and the login of the identity portal,
+        // which are not mounted here.
+        provideRouter([
+          { path: 'explorar', component: ExploreStubComponent },
+          { path: 'auth/login', component: LoginStubComponent },
+          ...routes,
+        ], withComponentInputBinding()),
       ],
     });
   });
