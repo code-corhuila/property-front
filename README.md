@@ -34,13 +34,13 @@ array of routes per mount point. The federation `name` of a portal must equal it
 
 | Route | Portal | Export of `./routes` | Local address |
 |---|---|---|---|
-| `/auth/register` ¹, `/auth/onboarding`, `/perfil` | `identity` | `REGISTER_ROUTES`, `ONBOARDING_ROUTES`, `PROFILE_ROUTES` | `http://localhost:4204` |
+| `/auth/login` ¹, `/auth/register` ¹, `/auth/onboarding`, `/perfil` | `identity` | `LOGIN_ROUTES`, `REGISTER_ROUTES`, `ONBOARDING_ROUTES`, `PROFILE_ROUTES` | `http://localhost:4204` |
 | `/explorar`, `/propiedades/:propiedadId` | `catalog` | `EXPLORE_ROUTES`, `PROPERTY_ROUTES` | `http://localhost:4201` |
 | `/propiedades/:propiedadId/reservar`, `/reservas` | `booking` | `BOOKING_FORM_ROUTES`, `BOOKINGS_ROUTES` | `http://localhost:4202` |
 | `/reservas/checkout/pago` | `payment` | `PAYMENT_ROUTES` | `http://localhost:4203` |
 | `/perfil/notificaciones` | `notification` (React) | — ² | `http://localhost:4205` |
 
-¹ Public, like `/` and `/auth/login`. Every other route needs a session.
+¹ Public, like `/` and `/auth/dev-login`. Every other route needs a session.
 ² The React portal is mounted through `mount(element, { apiClient })` and `unmount(element)`
 (ADR-012, rule 3) when `property-notification-portal` is created; until then the route
 only shows that the section is not available.
@@ -52,12 +52,28 @@ When a portal cannot be loaded, its area shows "Esta sección no está disponibl
 "Reintentar" button; the frame and the other portals keep working. "Reintentar" loads the
 portal again without reloading the page, which would close the session.
 
+## The session (HU-IDENT-002)
+
+`/auth/login` and `/auth/register` are screens of `property-identity-portal`; the container
+keeps what they obtain (`00-governance/security-policy.md`, "Client storage"):
+
+- **The interceptor takes the tokens** out of the answers of `POST /login`, `/register` and
+  `/refresh`: the access token stays in memory, the refresh token in `sessionStorage`, and the
+  portal receives the account without either.
+- **Renewal.** A `401` on a protected call is renewed once with `POST /refresh` and the call
+  is sent again; concurrent calls share one renewal, because a refresh token is single-use and
+  a reuse revokes every session (E-12). Right after `POST /users/me/upgrade-to-host` the
+  container renews too, so the next token carries `HOST`. A refused renewal closes the session
+  and opens the login with `expired=true`.
+- **Reload.** At start-up the refresh token of the tab renews the session; closing the tab ends it.
+- **"Cerrar sesión"** sends `POST /logout` with the refresh token of this session (E-13) and
+  closes it here even when Identity does not answer.
+
 ## Development sign-in
 
-Until `property-identity-portal` exists, `/auth/login` accepts a token pasted by hand,
-minted with `property-infra/scripts/dev-token.sh`. It is for development only and never
-reaches `main`. The token lives in memory, so reloading the page closes the session
-(`00-governance/security-policy.md`, "Client storage").
+`/auth/dev-login` accepts a token pasted by hand, minted with
+`property-infra-postgres/scripts/dev-token.sh`. It is for `develop` only (norm 5.5.2): it has
+no renewal and never reaches `main`.
 
 ## Install, run and test
 
