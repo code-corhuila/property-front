@@ -1,5 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthService } from '../core/auth/auth.service';
 import { SessionService } from '../core/auth/session.service';
 
 /**
@@ -81,7 +82,7 @@ import { SessionService } from '../core/auth/session.service';
 })
 export class ShellLayoutComponent {
   readonly session = inject(SessionService);
-  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
   readonly entries = [
     { path: '/explorar', label: 'Explorar', icon: 'M3 11 12 3l9 8M5 9.5V21h5v-6h4v6h5V9.5' },
@@ -95,8 +96,8 @@ export class ShellLayoutComponent {
       .map((word) => word[0].toUpperCase()).join(''),
   );
 
+  /** POST /logout of this session (E-13), then the landing. */
   signOut(): void {
-    this.session.clear();
-    void this.router.navigateByUrl('/');
+    this.auth.logout();
   }
 }

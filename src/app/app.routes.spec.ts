@@ -21,9 +21,9 @@ describe('app routes', () => {
     });
   });
 
-  it('protects every route except /, /auth/login, /auth/register and the 404', () => {
+  it('protects every route except /, the login, the development sign-in, /auth/register and the 404', () => {
     const open = routes.filter((route) => !route.canActivate?.includes(authGuard)).map((route) => route.path);
-    expect(open).toEqual(['', 'auth/login', 'auth/register', '**']);
+    expect(open).toEqual(['', 'auth/login', 'auth/dev-login', 'auth/register', '**']);
   });
 
   it('sends a visitor without a session from a portal route to the login', async () => {
