@@ -2,6 +2,7 @@ import { loadRemoteModule } from '@angular-architects/native-federation';
 import { Route, Routes } from '@angular/router';
 import { authGuard, landingGuard } from './core/auth/auth.guard';
 import { remoteUnavailable } from './core/errors/remote-unavailable.component';
+import { ReactPortal, ReactPortalComponent } from './core/federation/react-portal.component';
 import { remoteEntries } from './core/federation/remote-entries';
 
 /**
@@ -13,6 +14,17 @@ function portal(remoteName: string, routesName: string): Route['loadChildren'] {
   return () =>
     loadRemoteModule({ remoteName, remoteEntry: remoteEntries[remoteName], exposedModule: './routes' })
       .then((m) => m[routesName] as Routes)
+      .catch((err) => remoteUnavailable(remoteName, err));
+}
+
+/**
+ * Mounts a React portal (ADR-012, rule 3): its module exports mount and unmount, and the
+ * wrapper hands it the container's API client. It fails like an Angular portal: Section Unavailable.
+ */
+function reactPortal(remoteName: string): Route['loadChildren'] {
+  return () =>
+    import(/* @vite-ignore */ remoteEntries[remoteName])
+      .then((portal: ReactPortal): Routes => [{ path: '', component: ReactPortalComponent, data: { portal } }])
       .catch((err) => remoteUnavailable(remoteName, err));
 }
 
@@ -37,10 +49,8 @@ export function createRoutes(): Routes {
     { path: 'propiedades/:propiedadId', ...signedIn, loadChildren: portal('catalog', 'PROPERTY_ROUTES') },
     { path: 'reservas/checkout/pago', ...signedIn, loadChildren: portal('payment', 'PAYMENT_ROUTES') },
     { path: 'reservas', ...signedIn, loadChildren: portal('booking', 'BOOKINGS_ROUTES') },
-    // React portal (ADR-012, rule 3): until property-notification-portal exists and the
-    // container mounts it through mount()/unmount(), this route only shows its isolation.
-    { path: 'perfil/notificaciones', ...signedIn,
-      loadChildren: portal('notification', 'NOTIFICATION_ROUTES') },
+    // React portal (ADR-012, rule 3): property-notification-portal's mount()/unmount().
+    { path: 'perfil/notificaciones', ...signedIn, loadChildren: reactPortal('notification') },
     { path: 'perfil', ...signedIn, loadChildren: portal('identity', 'PROFILE_ROUTES') },
     { path: '**', title: 'Página no encontrada', loadComponent: () =>
         import('./layout/not-found.component').then((m) => m.NotFoundComponent) },
