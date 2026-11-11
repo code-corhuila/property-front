@@ -25,8 +25,9 @@ export function createRoutes(): Routes {
   return [
     { path: '', pathMatch: 'full', title: 'Property', canActivate: [landingGuard], loadComponent: () =>
         import('./layout/home.component').then((m) => m.HomeComponent) },
-    // DEVELOPMENT ONLY: replaced by the login of the identity portal (README).
-    { path: 'auth/login', title: 'Iniciar sesión', loadComponent: () =>
+    { path: 'auth/login', loadChildren: portal('identity', 'LOGIN_ROUTES') },
+    // DEVELOPMENT ONLY (norm 5.5.2): a token pasted by hand, for develop without Identity (README).
+    { path: 'auth/dev-login', title: 'Inicio de sesión de desarrollo', loadComponent: () =>
         import('./core/auth/sign-in.component').then((m) => m.SignInComponent) },
     { path: 'auth/register', loadChildren: portal('identity', 'REGISTER_ROUTES') },
     { path: 'auth/onboarding', ...signedIn, loadChildren: portal('identity', 'ONBOARDING_ROUTES') },
