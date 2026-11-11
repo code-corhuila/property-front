@@ -38,12 +38,14 @@ array of routes per mount point. The federation `name` of a portal must equal it
 | `/explorar`, `/propiedades/:propiedadId` | `catalog` | `EXPLORE_ROUTES`, `PROPERTY_ROUTES` | `http://localhost:4201` |
 | `/propiedades/:propiedadId/reservar`, `/reservas` | `booking` | `BOOKING_FORM_ROUTES`, `BOOKINGS_ROUTES` | `http://localhost:4202` |
 | `/reservas/checkout/pago` | `payment` | `PAYMENT_ROUTES` | `http://localhost:4203` |
-| `/perfil/notificaciones` | `notification` (React) | — ² | `http://localhost:4205` |
+| `/perfil/notificaciones` | `notification` (React) | — ² | `http://localhost:4205/mount.js` |
 
 ¹ Public, like `/` and `/auth/dev-login`. Every other route needs a session.
-² The React portal is mounted through `mount(element, { apiClient })` and `unmount(element)`
-(ADR-012, rule 3) when `property-notification-portal` is created; until then the route
-only shows that the section is not available.
+² The React portal is a plain ES module, `mount.js`, not a federation remote: the route
+imports it and `src/app/core/federation/react-portal.component.ts` calls
+`mount(element, { apiClient })` and, when the route is left, `unmount(element)` (ADR-012,
+rule 3). The `apiClient` wraps the container's `HttpClient` behind promises, with the same
+interceptor. `main.ts` hands Native Federation only the `remoteEntry.json` entries.
 
 **The ports 4201 to 4205 are provisional**: the documentation does not fix them yet.
 

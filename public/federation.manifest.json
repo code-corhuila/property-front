@@ -3,5 +3,5 @@
   "booking": "http://localhost:4202/remoteEntry.json",
   "payment": "http://localhost:4203/remoteEntry.json",
   "identity": "http://localhost:4204/remoteEntry.json",
-  "notification": "http://localhost:4205/remoteEntry.json"
+  "notification": "http://localhost:4205/mount.js"
 }
