@@ -9,7 +9,9 @@ fetch('federation.manifest.json')
   .catch(() => ({}))
   .then((manifest) => {
     Object.assign(remoteEntries, manifest);
-    return initFederation(manifest);
+    // Native Federation registers the Angular portals; a React portal is a plain ES module
+    // (mount.js) that its route imports itself (ADR-012, rule 3).
+    return initFederation(Object.fromEntries(Object.entries(manifest).filter(([, url]) => !url.endsWith('.js'))));
   })
   .catch((err) => console.error(err))
   .then(() => import('./bootstrap'))
