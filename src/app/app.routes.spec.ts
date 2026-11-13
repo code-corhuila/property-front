@@ -28,7 +28,7 @@ describe('app routes', () => {
     });
   });
 
-  it('protects every route except /, /auth/login, /auth/register and the 404', () => {
+  it('protects every route except /, the login, /auth/register and the 404', () => {
     const open = routes.filter((route) => !route.canActivate?.includes(authGuard)).map((route) => route.path);
     expect(open).toEqual(['', 'auth/login', 'auth/register', '**']);
   });
