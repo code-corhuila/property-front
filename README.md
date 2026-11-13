@@ -52,14 +52,28 @@ When a portal cannot be loaded, its area shows "Esta sección no está disponibl
 "Reintentar" button; the frame and the other portals keep working. "Reintentar" loads the
 portal again without reloading the page, which would close the session.
 
-## Sign-in
+## The session (HU-IDENT-002)
 
-`/auth/login` is the login of `property-identity-portal` (HU-IDENT-002), mounted from
-`LOGIN_ROUTES`. Until that portal exists, the route shows that the section is not
-available, like any portal that is down. The development sign-in, where a token minted
-with `property-infra/scripts/dev-token.sh` is pasted by hand, lives only in `develop` and
-`qa` and never reaches `main` (rule 5.5.2). The token lives in memory, so reloading the
-page closes the session (`00-governance/security-policy.md`, "Client storage").
+`/auth/login` and `/auth/register` are screens of `property-identity-portal`; the container
+keeps what they obtain (`00-governance/security-policy.md`, "Client storage"):
+
+- **The interceptor takes the tokens** out of the answers of `POST /login`, `/register` and
+  `/refresh`: the access token stays in memory, the refresh token in `sessionStorage`, and the
+  portal receives the account without either.
+- **Renewal.** A `401` on a protected call is renewed once with `POST /refresh` and the call
+  is sent again; concurrent calls share one renewal, because a refresh token is single-use and
+  a reuse revokes every session (E-12). Right after `POST /users/me/upgrade-to-host` the
+  container renews too, so the next token carries `HOST`. A refused renewal closes the session
+  and opens the login with `expired=true`.
+- **Reload.** At start-up the refresh token of the tab renews the session; closing the tab ends it.
+- **"Cerrar sesión"** sends `POST /logout` with the refresh token of this session (E-13) and
+  closes it here even when Identity does not answer.
+
+## Development sign-in (develop only)
+
+The development sign-in, `/auth/dev-login` (a token pasted by hand, minted with
+`property-infra-postgres/scripts/dev-token.sh`), exists only in `develop` (norm 5.5.2). This
+release logs in through `property-identity-portal`.
 
 ## Install, run and test
 

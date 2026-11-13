@@ -29,6 +29,60 @@ describe('apiInterceptor', () => {
   afterEach(() => {
     vi.useRealTimers();
     backend.verify();
+    sessionStorage.clear();
+  });
+
+  const GW = 'http://localhost:8080';
+  const auth = (n: number) => ({ accessToken: `access-${n}`, refreshToken: `refresh-${n}`, expiresIn: 3600,
+    user: { id: 'u', email: 'ana@example.com', name: 'Ana Pérez', roles: ['GUEST'] } });
+
+  it('keeps the session of a login and hands the portal the account without the tokens', () => {
+    let body: unknown;
+    http.post('/api/v1/login', { email: 'a', password: 'b' }).subscribe((b) => (body = b));
+    backend.expectOne(`${GW}/api/v1/login`).flush(auth(1));
+    expect(session.token()).toBe('access-1');
+    expect(session.refreshToken()).toBe('refresh-1');
+    expect(body).toEqual({ expiresIn: 3600, user: auth(1).user });
+  });
+
+  it('renews once for two requests that got a 401 and sends both again with the new token', () => {
+    session.start(auth(1));
+    const results: unknown[] = [];
+    http.get('/api/v1/reservas').subscribe((r) => results.push(r));
+    http.get('/api/v1/sagas/s').subscribe((r) => results.push(r));
+    for (const path of ['/api/v1/reservas', '/api/v1/sagas/s']) {
+      backend.expectOne(`${GW}${path}`).flush({}, { status: 401, statusText: 'Unauthorized' });
+    }
+    const refresh = backend.expectOne(`${GW}/api/v1/refresh`);
+    expect(refresh.request.body).toEqual({ refreshToken: 'refresh-1' });
+    refresh.flush(auth(2));
+    for (const path of ['/api/v1/reservas', '/api/v1/sagas/s']) {
+      const again = backend.expectOne(`${GW}${path}`);
+      expect(again.request.headers.get('Authorization')).toBe('Bearer access-2');
+      again.flush({ ok: path });
+    }
+    expect(results).toHaveLength(2);
+    expect(session.refreshToken()).toBe('refresh-2');
+  });
+
+  it('closes the session and opens the login when the renewal is refused', () => {
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    session.start(auth(1));
+    const result = capture('/api/v1/reservas');
+    backend.expectOne(`${GW}/api/v1/reservas`).flush({}, { status: 401, statusText: 'Unauthorized' });
+    backend.expectOne(`${GW}/api/v1/refresh`).flush({ error: 'UNAUTHORIZED' }, { status: 401, statusText: 'Unauthorized' });
+    expect(session.token()).toBeNull();
+    expect(session.refreshToken()).toBeNull();
+    expect(result.error?.status).toBe(401);
+    expect(navigate).toHaveBeenCalled();
+  });
+
+  it('renews right after becoming a host, so the next token carries the role', () => {
+    session.start(auth(1));
+    http.post('/api/v1/users/me/upgrade-to-host', {}).subscribe();
+    backend.expectOne(`${GW}/api/v1/users/me/upgrade-to-host`).flush({ roles: ['HOST'] });
+    backend.expectOne(`${GW}/api/v1/refresh`).flush(auth(2));
+    expect(session.token()).toBe('access-2');
   });
 
   function capture(url: string): { error?: ApiError } {

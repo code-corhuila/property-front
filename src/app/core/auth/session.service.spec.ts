@@ -22,6 +22,17 @@ describe('SessionService', () => {
     expect(session.name()).toBe('Juan Ortiz');
   });
 
+  it('keeps the refresh token of an AuthResponse in sessionStorage only, and clears it', () => {
+    const session = TestBed.inject(SessionService);
+    session.start({ accessToken: 'access-1', refreshToken: 'refresh-1', user: { name: 'Ana Pérez' } });
+    expect(session.token()).toBe('access-1');
+    expect(session.name()).toBe('Ana Pérez');
+    expect(sessionStorage.getItem(SessionService.REFRESH_KEY)).toBe('refresh-1');
+    expect(localStorage.length).toBe(0);
+    session.clear();
+    expect(session.refreshToken()).toBeNull();
+  });
+
   it('closes the session', () => {
     const session = TestBed.inject(SessionService);
     session.set('token-abc', 'Juan Ortiz');
